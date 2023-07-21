@@ -4,7 +4,6 @@ use std::{
     fs::{self, File},
     process,
 };
-
 #[derive(Debug)]
 enum GrepOptions {
     LowerCase,
@@ -46,7 +45,7 @@ impl<'a> Grep<'a> {
         let file = File::open(&self.file_path);
         match file {
             Ok(_) => Ok(()),
-            Err(_) => Err("Invalid file path or File not found"),
+            Err(_) => Err("File not found"),
         }
     }
     fn search(&self) -> Result<(), &'static str> {
@@ -61,6 +60,9 @@ impl<'a> Grep<'a> {
                         matches.push(line);
                     }
                 }
+                if matches.is_empty() {
+                    return Err("No matches found ");
+                }
                 println!("{:?}", matches);
                 Ok(())
             }
@@ -70,21 +72,21 @@ impl<'a> Grep<'a> {
     fn query_parser(&self) -> String {
         self.query.join(" ")
     }
-    fn index_return(val: &str, ind: &'a Vec<String>) -> Result<usize, &'static str> {
-        let index = ind.iter().position(|x| x == val);
+    fn index_return(&self) -> Result<usize, &'static str> {
+        let index = self.args.iter().position(|x| x == &self.flags[0]);
         match index {
             Some(i) => Ok(i),
-            None => return Err(""),
+            None => return Err("Error indexing flag. No flag specified."),
         }
     }
     fn args_parser(&mut self) -> Result<Vec<String>, &'static str> {
-        if !self.args.contains(&"-F".to_string()) {
-            return Err("File path not specified");
+        if !self.args.iter().any(|arg| self.flags.contains(&arg)) {
+            return Err("No flags specified");
         }
         for flag in self.args {
             match flag.as_str() {
                 "-F" => {
-                    let option_index = Self::index_return("-F", self.args)?;
+                    let option_index = self.index_return()?;
                     if self.args.len() - 1 == option_index {
                         return Err("No file path specified");
                     }
@@ -102,7 +104,7 @@ impl<'a> Grep<'a> {
             }
         }
 
-        let _search = Self::search(&self)?;
+        let _search = self.search()?;
         Ok(vec!["gee".to_string()])
     }
 }
