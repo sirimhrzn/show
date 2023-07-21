@@ -32,14 +32,13 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 impl<'a> Grep<'a> {
     fn new(options: Vec<GrepOptions>, args: &'a Vec<String>) -> Self {
-        let grep = Grep {
+        Grep {
             options,
             args,
             file_path: "".to_string(),
             query: vec!["".to_string()],
             flags: vec!["-F".to_string(), "-U".to_string(), "-L".to_string()],
-        };
-        return grep;
+        }
     }
     fn file_checker(&self) -> Result<(), &'static str> {
         let file = File::open(&self.file_path);
@@ -104,9 +103,7 @@ impl<'a> Grep<'a> {
             }
         }
 
-        let _search = self.search()?;
+        self.search()?;
         Ok(vec!["gee".to_string()])
     }
 }
-
-
