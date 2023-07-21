@@ -8,6 +8,7 @@ use std::{
 enum GrepOptions {
     LowerCase,
     UpperCase,
+    Default,
 }
 
 #[derive(Debug)]
@@ -21,7 +22,7 @@ struct Grep<'a> {
 fn main() -> Result<(), Box<dyn Error>> {
     let args = env::args();
     let values: Vec<String> = args.collect();
-    let mut grepper = Grep::new(vec![], &values);
+    let mut grepper = Grep::new(vec![GrepOptions::Default], &values);
 
     if let Err(e) = Grep::args_parser(&mut grepper) {
         println!("{e}");
@@ -32,14 +33,13 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 impl<'a> Grep<'a> {
     fn new(options: Vec<GrepOptions>, args: &'a Vec<String>) -> Self {
-        let grep = Grep {
+        Grep {
             options,
             args,
             file_path: "".to_string(),
             query: vec!["".to_string()],
             flags: vec!["-F".to_string(), "-U".to_string(), "-L".to_string()],
-        };
-        return grep;
+        }
     }
     fn file_checker(&self) -> Result<(), &'static str> {
         let file = File::open(&self.file_path);
@@ -48,15 +48,23 @@ impl<'a> Grep<'a> {
             Err(_) => Err("File not found"),
         }
     }
-    fn search(&self) -> Result<(), &'static str> {
+    fn search(&mut self) -> Result<(), &'static str> {
+        if self.query.is_empty()
+            && self
+                .options
+                .iter()
+                .any(|a| matches!(a, GrepOptions::Default))
+        {
+            return Err("Query is empty");
+        }
         self.file_checker()?;
-        let query = &self.query_parser();
+        let query = self.query_parser();
         let file = fs::read_to_string(&self.file_path);
         let mut matches = Vec::new();
         match file {
             Ok(content) => {
                 for line in content.lines() {
-                    if line.contains(query) {
+                    if line.to_lowercase().contains(&query.to_lowercase()) {
                         matches.push(line);
                     }
                 }
@@ -104,9 +112,8 @@ impl<'a> Grep<'a> {
             }
         }
 
-        let _search = self.search()?;
+        self.search()?;
         Ok(vec!["gee".to_string()])
     }
 }
-
 
