@@ -1,3 +1,4 @@
+use std::io::Write;
 use std::{
     collections::HashMap,
     env,
@@ -5,6 +6,8 @@ use std::{
     fs::{self, File},
     process,
 };
+use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
+
 #[derive(Debug)]
 enum GrepOptions {
     LowerCase,
@@ -85,17 +88,24 @@ impl<'a> Grep<'a> {
         let file = fs::read_to_string(&self.file_path);
         let mut line_number_map: HashMap<usize, &str> = HashMap::new();
         let mut i: usize = 0;
+        let mut stdout = StandardStream::stdout(ColorChoice::Always);
+
         match file {
             Ok(content) => {
                 for line in content.lines() {
                     i += 1;
                     if line.to_lowercase().contains(&query.to_lowercase()) {
+                        stdout
+                            .set_color(ColorSpec::new().set_bg(Some(Color::Green)))
+                            .expect("failed to set background");
+
                         line_number_map.insert(&i + 1, &line);
                         if i < 10 {
                             println!("{}:  {}", &i, &line);
                         } else {
                             println!("{}: {}", &i, &line);
                         }
+                        writeln!(&mut stdout, "{}", line).expect("failed to write to wrtiet");
                     }
                 }
                 if line_number_map.is_empty() {
