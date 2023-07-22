@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     env,
     error::Error,
     fs::{self, File},
@@ -82,19 +83,25 @@ impl<'a> Grep<'a> {
         self.file_checker()?;
         let query = self.query_parser();
         let file = fs::read_to_string(&self.file_path);
-        let mut matches = Vec::new();
+        let mut line_number_map: HashMap<usize, &str> = HashMap::new();
+        let mut i: usize = 0;
         match file {
             Ok(content) => {
                 for line in content.lines() {
+                    i += 1;
                     if line.to_lowercase().contains(&query.to_lowercase()) {
-                        matches.push(line);
+                        line_number_map.insert(&i + 1, &line);
+                        if i < 10 {
+                            println!("{}:  {}", &i, &line);
+                        } else {
+                            println!("{}: {}", &i, &line);
+                        }
                     }
                 }
-                if matches.is_empty() {
+                if line_number_map.is_empty() {
                     return Err(GrepError::QueryNotFound);
                 }
-                println!(" {} matches found", matches.len());
-                println!("{:?}", matches);
+                println!("{} matches found", line_number_map.len());
                 Ok(())
             }
             Err(_) => Err(GrepError::ReadFailed),
