@@ -45,7 +45,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             GrepError::NoQuerySpecified => println!("No query given. Please run --help for info"),
             GrepError::NoFilePathSpecified => println!("No file path given "),
             GrepError::NoFlagSpecified => {
-                println!("No flags specified. Please run --help for info")
+                println!("No flags specified. Please run --help for info \nThis version only supports \n \n show [QUERY] -f [FILE_PATH] \n \n \n   \"-f\": Search query in the file ")
             }
             GrepError::CustomError(error) => println!("{error}"),
         }
@@ -123,6 +123,9 @@ impl<'a> Grep<'a> {
         }
         for flag in self.args {
             match flag.as_str() {
+                "--help" => {
+                    println!("This version only supports \n \n \n show [QUERY] -f [FILE_PATH] \n \"-f\": Search query in the file ");
+                }
                 "-F" => {
                     let option_index = self.index_return()?;
                     if self.args.len() - 1 == option_index {
