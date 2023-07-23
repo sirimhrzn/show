@@ -22,6 +22,9 @@ _I recommend copy pasting the commands given below and install directly from ter
 `sudo ./install.sh`
 >_Install the application_
 
+ `show never -F text.txt`
+>_Test if app is installed and is working_
+
 Feel free to use it. As of now it only supports
 
 `show [QUERY] -F [FILE_PATH]`
