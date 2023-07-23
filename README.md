@@ -16,7 +16,7 @@ _I recommend copy pasting the commands given below and install directly from ter
 
 > _Optional if manually extracted_
 
-`cd show[v-0.1.0]`
+`cd show-v0.1.0`
 > _Change directory to extracted folder_
 
 `sudo ./install.sh`
