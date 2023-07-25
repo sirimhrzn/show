@@ -1,5 +1,4 @@
 use std::{
-    collections::HashMap,
     env,
     error::Error,
     fs::{self, File},
@@ -61,14 +60,14 @@ impl<'a> Grep<'a> {
             args,
             file_path: "".to_string(),
             query: vec!["".to_string()],
-            flags: vec!["-F".to_string(), "-U".to_string(), "-L".to_string()],
+            flags: vec!["-f".to_string(), "-U".to_string(), "-L".to_string()],
         }
     }
-    fn file_checker(&self) -> Result<(), GrepError> {
+    fn file_checker(&self) -> bool {
         let file = File::open(&self.file_path);
         match file {
-            Ok(_) => Ok(()),
-            Err(_) => Err(GrepError::FileNotFound),
+            Ok(_) => true,
+            Err(_) => false,
         }
     }
     fn search(&mut self) -> Result<(), GrepError> {
@@ -80,17 +79,17 @@ impl<'a> Grep<'a> {
         {
             return Err(GrepError::NoQuerySpecified);
         }
-        self.file_checker()?;
+        if !self.file_checker() {
+            return Err(GrepError::FileNotFound);
+        }
         let query = self.query_parser();
         let file = fs::read_to_string(&self.file_path);
-        let mut line_number_map: HashMap<usize, &str> = HashMap::new();
-        let mut i: usize = 0;
+        let mut match_count: usize = 0;
         match file {
             Ok(content) => {
-                for line in content.lines() {
-                    i += 1;
+                for (i, line) in content.lines().enumerate() {
                     if line.to_lowercase().contains(&query.to_lowercase()) {
-                        line_number_map.insert(&i + 1, &line);
+                        match_count += 1;
                         if i < 10 {
                             println!("{}:  {}", &i, &line);
                         } else {
@@ -98,10 +97,10 @@ impl<'a> Grep<'a> {
                         }
                     }
                 }
-                if line_number_map.is_empty() {
+                if match_count == 0 {
                     return Err(GrepError::QueryNotFound);
                 }
-                println!("{} matches found", line_number_map.len());
+                println!("{} matches found", &match_count);
                 Ok(())
             }
             Err(_) => Err(GrepError::ReadFailed),
@@ -110,30 +109,44 @@ impl<'a> Grep<'a> {
     fn query_parser(&self) -> String {
         self.query.join(" ")
     }
-    fn index_return(&self) -> Result<usize, GrepError> {
-        let index = self.args.iter().position(|x| x == &self.flags[0]);
+    fn index_return(&self, flag: usize) -> Result<usize, GrepError> {
+        let index = self.args.iter().position(|x| x == &self.args[flag]);
         match index {
             Some(i) => Ok(i),
             None => return Err(GrepError::CustomError("Invalid index")),
         }
     }
+    fn cat(&self) -> Result<String, GrepError> {
+        match fs::read_to_string(&self.file_path) {
+            Ok(data) => Ok(data),
+            Err(_) => Err(GrepError::ReadFailed),
+        }
+    }
     fn args_parser(&mut self) -> Result<Vec<String>, GrepError> {
-        if !self.args.iter().any(|arg| self.flags.contains(&arg)) {
+        if self.args.len() == 1 {
             return Err(GrepError::NoFlagSpecified);
         }
-        for flag in self.args {
+        self.file_path = self.args[1].clone();
+        if !self.args.iter().any(|arg| self.flags.contains(&arg)) && self.file_checker() {
+            if self.args.len() > 2 {
+                return Err(GrepError::NoFlagSpecified);
+            }
+            let cat = self.cat()?;
+            println!("{cat}");
+            return Ok(vec!["".to_string()]);
+        }
+        for (i, flag) in self.args.iter().enumerate() {
             match flag.as_str() {
                 "--help" => {
                     println!("This version only supports \n \n \n show [QUERY] -f [FILE_PATH] \n \"-f\": Search query in the file ");
                 }
-                "-F" => {
-                    let option_index = self.index_return()?;
+                "-f" => {
+                    let option_index = self.index_return(i)?;
                     if self.args.len() - 1 == option_index {
                         return Err(GrepError::NoFilePathSpecified);
                     }
-                    let file = self.args[option_index + 1].to_string();
+                    self.file_path = self.args[option_index + 1].to_string();
                     self.query = self.args[1..option_index].to_vec();
-                    self.file_path = file;
                 }
                 "-L" => {
                     self.options.push(GrepOptions::LowerCase);
