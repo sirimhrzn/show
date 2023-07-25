@@ -109,13 +109,13 @@ impl<'a> Grep<'a> {
     fn query_parser(&self) -> String {
         self.query.join(" ")
     }
-    fn index_return(&self, flag: usize) -> Result<usize, GrepError> {
-        let index = self.args.iter().position(|x| x == &self.args[flag]);
-        match index {
-            Some(i) => Ok(i),
-            None => return Err(GrepError::CustomError("Invalid index")),
-        }
-    }
+    // fn index_return(&self, flag: usize) -> Result<usize, GrepError> {
+    //  let index = self.args.iter().position(|x| x == &self.args[flag]);
+    // match index {
+    // Some(i) => Ok(i),
+    //None => return Err(GrepError::CustomError("Invalid index")),
+    //}
+    //}
     fn cat(&self) -> Result<String, GrepError> {
         match fs::read_to_string(&self.file_path) {
             Ok(data) => Ok(data),
@@ -141,12 +141,12 @@ impl<'a> Grep<'a> {
                     println!("This version only supports \n \n \n show [QUERY] -f [FILE_PATH] \n \"-f\": Search query in the file ");
                 }
                 "-f" => {
-                    let option_index = self.index_return(i)?;
-                    if self.args.len() - 1 == option_index {
+                    // let option_index = self.index_return(i)?;
+                    if self.args.len() - 1 == i {
                         return Err(GrepError::NoFilePathSpecified);
                     }
-                    self.file_path = self.args[option_index + 1].to_string();
-                    self.query = self.args[1..option_index].to_vec();
+                    self.file_path = self.args[&i + 1].to_string();
+                    self.query = self.args[1..i].to_vec();
                 }
                 "-L" => {
                     self.options.push(GrepOptions::LowerCase);
