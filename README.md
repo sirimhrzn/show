@@ -1,4 +1,6 @@
 # Show
+> _Started this when i was beginning to learn Rust, so do not mind the spaghetti code , will refactor this and complete in the future to support all oses and also use Clap for parsing arguments_.
+> 
 [ grep,tail,cat ] like cli tool written in rust.
 Only one release as of now which does very basic function,code has been refactored where other functionalities can be added without having to change everything so will be adding more features soon.
 
